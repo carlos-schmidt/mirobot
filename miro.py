@@ -1,5 +1,4 @@
-from model.config import Config
-from model.mirobot_wrapper import Mirobot
+from model import Config, Mirobot
 from opcua import Client
 
 # Change where to find config here. Also set section if needed
