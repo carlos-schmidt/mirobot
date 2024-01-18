@@ -1,13 +1,14 @@
 import asyncio
 from asyncua import Client, Node
 import logging
+from run import main as robo
 
-url = 'opc.tcp://localhost:4840/freeopcua/server/'
+url = 'opc.tcp://192.168.1.1:4840/'
 namespace = 'http://iosb.fraunhofer.example'
-topic = 'ns=3;s=MeasuringStationStep'
+topic = "ns=3;s=\"MeasuringStationStep\""
 period = 500 # millis, period of reading value
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARN)
 _logger = logging.getLogger('asyncua')
 
 class SubscriptionHandler:
@@ -19,6 +20,9 @@ class SubscriptionHandler:
         Callback for asyncua Subscription.
         This method will be called when the Client received a data change message from the Server.
         """
+        if val==22:
+            _logger.warn('Starting robot interaction')
+            robo()
         _logger.info('datachange_notification %r %s', node, val)
         # TODO in case of publishing by server, use this callback for robot action triggering
 
@@ -29,34 +33,33 @@ async def main():
     async with Client(url=url) as client:
         
         # Find the namespace index
-        nsidx = await client.get_namespace_index(namespace)
-        print(f'Namespace Index for "{namespace}": {nsidx}')
-
+        #nsidx = await client.get_namespace_index(namespace)
+        #print(f'Namespace Index for "{namespace}": {nsidx}')
+        #print(await client.nodes.root.get_child(["0:Objects"]))
         # Get the variable node for read / write
-        var = await client.nodes.root.get_child(
-            ['0:Objects', f'{nsidx}:MeasuringStationStep', f'{nsidx}:MyVariable']
-        )
+        var = client.get_node(topic)
+        
+        print("hello ",var, type(var))
         value = await var.read_value()
         print(f'Value of MyVariable ({var}): {value}')
         
         handler = SubscriptionHandler()
         subscription = await client.create_subscription(period, handler)
         nodes = [
-            var,
-            client.get_node("ns=3;s=MeasuringStationStep")
+            var
         ]
         
         # We subscribe to data changes for two nodes (variables).
         await subscription.subscribe_data_change(nodes)
         
         # We let the subscription run for ten seconds
-        await asyncio.sleep(10)
+        await asyncio.sleep(100000)
         
         # This is optional since closing the connection will also delete all subscriptions.
-        await subscription.delete()
+        # await subscription.delete()
         
         # After one second we exit the Client context manager - this will close the connection.
-        await asyncio.sleep(1)
+        # await asyncio.sleep(1)
         
 if __name__ == "__main__":
     asyncio.run(main())
