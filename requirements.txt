@@ -1,3 +1,5 @@
 mirobot-py
 wlkata-mirobot-python
 asyncua
+numpy
+black

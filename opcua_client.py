@@ -4,7 +4,6 @@ import logging
 from run import main as robo
 
 url = 'opc.tcp://192.168.1.1:4840/'
-namespace = 'http://iosb.fraunhofer.example'
 topic = "ns=3;s=\"MeasuringStationStep\""
 period = 500 # millis, period of reading value
 
@@ -12,9 +11,7 @@ logging.basicConfig(level=logging.WARN)
 _logger = logging.getLogger('asyncua')
 
 class SubscriptionHandler:
-    """
-    The SubscriptionHandler is used to handle the data that is received for the subscription.
-    """
+        
     def datachange_notification(self, node: Node, val, data):
         """
         Callback for asyncua Subscription.
@@ -22,11 +19,12 @@ class SubscriptionHandler:
         """
         if val==22:
             _logger.warn('Starting robot interaction')
+            self.start_robot_interaction()
             robo()
         _logger.info('datachange_notification %r %s', node, val)
         # TODO in case of publishing by server, use this callback for robot action triggering
-
-
+            
+    
 async def main():
     
     print(f'Connecting to {url}...')
@@ -45,9 +43,7 @@ async def main():
         
         handler = SubscriptionHandler()
         subscription = await client.create_subscription(period, handler)
-        nodes = [
-            var
-        ]
+        nodes = [var]
         
         # We subscribe to data changes for two nodes (variables).
         await subscription.subscribe_data_change(nodes)

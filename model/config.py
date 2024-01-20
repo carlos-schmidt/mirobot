@@ -8,26 +8,32 @@ class Config:
         """
         config_dict = _get_config_values(file, section)
         print(config_dict)
-        self.opcua_server_url = config_dict['opcua_server_url']
-        self.opcua_request_timeout = config_dict['opcua_request_timeout']
-        self.mirobot_portname = config_dict['mirobot_portname']
-        self.mirobot_debug = config_dict['mirobot_debug']
 
-    def get_opcua_server_url(self):
-        return self.opcua_server_url
+        self.opcua_server_url = config_dict["opcua_server_url"]
 
-    def get_opcua_request_timeout(self):
-        return self.opcua_request_timeout
+        # For each topic, a value should be given where the mirobot shall trigger
+        self.opcua_topics: list() = config_dict["opcua_topics"]
+        self.opcua_values: list() = config_dict["opcua_values"]
+        self.opcua_routines: list() = config_dict["opcua_routines"]
+        assert len(self.opcua_topics) == len(self.opcua_values) and\
+        len(self.opcua_values) == len(self.opcua_routines)
 
-    def get_mirobot_portname(self):
-        return self.mirobot_portname
+        self.opcua_polling_rate = config_dict["opcua_polling_rate"]
+        self.opcua_request_timeout = config_dict["opcua_request_timeout"]
+        
+        self.mirobot_portname = config_dict["mirobot_portname"]
+        self.mirobot_debug = bool(config_dict["mirobot_debug"])
+        
+        self.mirobot_destination_position = config_dict["mirobot_source_position"]
+        self.mirobot_destination_position = config_dict["mirobot_destination_position"]
+        self.mirobot_store_positions = config_dict["mirobot_store_positions"]
+        
+        
 
-    def get_mirobot_debug(self):
-        return self.mirobot_debug
 
-
-def _get_config_values(file='./config.cfg', section='DEFAULT'):
+def _get_config_values(file="./config.cfg", section="DEFAULT"):
     from configparser import ConfigParser
+
     config = ConfigParser()
 
     config.read(file)
