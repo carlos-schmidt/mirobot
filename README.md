@@ -2,6 +2,8 @@
 
 Approach with caution
 
+Does not run with python 3.11!!! Only tested with 3.9
+
 ## How-To
 
 1. Go to config.cfg
