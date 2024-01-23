@@ -1,5 +1,6 @@
 import logging
 from time import sleep
+from typing import List
 import numpy as np
 from wlkata_mirobot import WlkataMirobot, WlkataMirobotTool
 from model.config import Config
@@ -14,7 +15,7 @@ def _translate(current_position: RobotPose, x, y, z, alpha) -> RobotPose:
     """Translate and rotate point around y axis using a homogenous matrix
 
     Args:
-        point (RobotPosition): Current position
+        point (RobotPose): Current position
         x (float): x axis translation offset
         y (float): y axis translation offset
         z (float): z axis translation offset
@@ -78,16 +79,16 @@ class Mirobot(WlkataMirobot):
 
     def pick_up(self):
         """Turn air pump on to activate suction gripper"""
-        self.set_air_pump(WlkataMirobot.AIR_PUMP_SUCTION_PWM_VALUE)
+        self.pump_on()
 
     def drop(self):
         """Turn air pump off to deactivate suction gripper"""
-        self.set_air_pump(WlkataMirobot.AIR_PUMP_SUCTION_PWM_VALUE)
+        self.pump_off()
 
     def move_along_trajectory(
         self,
         destination: RobotPose,
-        trajectory: [RobotPose],
+        trajectory: List[RobotPose],
         speed: float = 0.5,
     ):
         """Move to destination along a trajectory defined by positions in trajectory at a specified speed

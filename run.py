@@ -1,10 +1,9 @@
 import asyncio
 import logging
 import numpy as np
-import sys
 from time import sleep
 from asyncua import Client, Node
-
+from mirobot import BaseMirobot, Mirobot
 from wlkata_mirobot import WlkataMirobot, WlkataMirobotTool
 from model.config import Config
 from model.mirobot_wrapper import Mirobot
@@ -14,7 +13,7 @@ from opcua_client import SubscriptionHandler
 logging.basicConfig(level=logging.WARN)
 mr_logger = logging.getLogger("MirobotRunner")
 
-
+Mirobot().circular_interpolation
 class MirobotRunner:
     def __init__(self, config: Config) -> None:
         self.opcua_handler = SubscriptionHandler()
@@ -33,9 +32,10 @@ class MirobotRunner:
                 mr_logger.warn("Starting robot interaction")
                 # Call routine by its name (possibly unsafe?)
                 if hasattr(self, routine):
-                    getattr(self, routine)()
+                    routine: function = getattr(self, routine)
+                    routine()
                 else:
-                    mr_logger.error(f"Routine does not exist in MirobotRunner: {routine}")
+                    mr_logger.error(f"Following routine does not exist in MirobotRunner: {routine}")
                 return
 
     def put_from_conv_bucket():
@@ -66,7 +66,7 @@ class MirobotRunner:
             # One handler for all topics. In datachange_notification the decision is made what to do.
             subscription = await client.create_subscription(
                 config.opcua_polling_rate, self
-            )
+            )   
 
             # We subscribe to data changes for two nodes (variables).
             await subscription.subscribe_data_change(self.triggers_and_routines)
@@ -78,6 +78,10 @@ class MirobotRunner:
     # TODO maybe poll current position and stop if too close to obstacle? Also slow down when getting closer
     
     # TODO OR: compute halfway position and move there, before: test if anything between robo and halfway. do this for quarterway too?
+
+    # TODO also interesting: circular_interpolation(ex,ey,radius).
+    # 
+    # TODO important: use linear_interpolation instead of go_to_axis. This ensures a straight line movement instead of rotating base first. 
 
 if __name__ == "__main__":
     config = Config("./config.cfg")
