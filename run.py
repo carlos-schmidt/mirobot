@@ -34,6 +34,7 @@ class MirobotRunner:
         ]
         self.stored_items: int = config.stored_items_initial
 
+
     def datachange_notification(self, node: Node, val, data):
         """
         Callback for asyncua Subscription.
@@ -87,23 +88,14 @@ class MirobotRunner:
             )
 
             # We subscribe to data changes for two nodes (variables).
-            await subscription.subscribe_data_change(self.triggers_and_routines)
+            await subscription.subscribe_data_change(config.opcua_topics)
 
             # We let the subscription run for one hundred thousand seconds TODO change
             await asyncio.sleep(100_000)
-
-    # TODO calculate trajectory and test for possible crashes
-    # TODO maybe poll current position and stop if too close to obstacle? Also slow down when getting closer
-
-    # TODO OR: compute halfway position and move there, before: test if anything between robo and halfway. do this for quarterway too?
-
-    # TODO also interesting: circular_interpolation(ex,ey,radius).
-    #
-    # TODO important: use linear_interpolation instead of go_to_axis. This ensures a straight line movement instead of rotating base first.
 
 
 if __name__ == "__main__":
     config = Config("./config.cfg", "DEFAULT")
     mirobot_runner = MirobotRunner(config)
-
-    asyncio.run(mirobot_runner.listen_for_opcua_events())
+    asyncio.create_task(mirobot_runner.listen_for_opcua_events())
+    asyncio.run()
