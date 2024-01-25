@@ -80,8 +80,6 @@ class RobotPose:
         closest_point_to_base = np.asarray(destination.get_position())\
              * np.dot(np.asarray((self-destination).get_position()), self.base)
 
-        
 
-
-
-
+    def astuple(self):
+        return (self.x,self.y,self.z,self.a,self.b,self.c)

@@ -8,9 +8,18 @@ class Config:
         """
         config_dict = _get_config_values(file, section)
         print(config_dict)
-
+        
+        # ROBO ENV
+        self.stored_items_initial = config_dict["stored_items_initial"]
+        self.conveyor_belt_output_location = config_dict["conveyor_belt_output_location"]
+        self.conveyor_belt_intermediate_locations = config_dict["conveyor_belt_intermediate_locations"]
+        self.conveyor_belt_input_location = config_dict["conveyor_belt_input_location"]
+        self.store_locations = config_dict["store_locations"]
+        self.obstacle_locations = config_dict["obstacle_locations"]
+        self.stored_items_initial = config_dict["stored_items_initial"]
+        
+        # OPC UA
         self.opcua_server_url = config_dict["opcua_server_url"]
-
         # For each topic, a value should be given where the mirobot shall trigger
         self.opcua_topics: list() = config_dict["opcua_topics"]
         self.opcua_values: list() = config_dict["opcua_values"]
@@ -21,14 +30,10 @@ class Config:
         self.opcua_polling_rate = config_dict["opcua_polling_rate"]
         self.opcua_request_timeout = config_dict["opcua_request_timeout"]
         
+        # ROBO CONF
         self.mirobot_portname = config_dict["mirobot_portname"]
         self.mirobot_debug = bool(config_dict["mirobot_debug"])
-        
-        self.mirobot_destination_position = config_dict["mirobot_source_position"]
-        self.mirobot_destination_position = config_dict["mirobot_destination_position"]
-        self.mirobot_store_positions = config_dict["mirobot_store_positions"]
-        
-        
+                
 
 
 def _get_config_values(file="./config.cfg", section="DEFAULT"):

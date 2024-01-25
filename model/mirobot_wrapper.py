@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 from wlkata_mirobot import WlkataMirobot, WlkataMirobotTool
 from model.config import Config
-from model.RobotPose import RobotPose
+from model.robot_pose import RobotPose
 
 
 logging.basicConfig(level=logging.WARN)
@@ -44,7 +44,11 @@ def _print_response(response):
 
 class Mirobot(WlkataMirobot):
     def __init__(
-        self, mirobot_portname: str, mirobot_debug: bool, default_to_zero: bool = True, tool_length: float = 0
+        self,
+        mirobot_portname: str,
+        mirobot_debug: bool,
+        default_to_zero: bool = True,
+        tool_length: float = 0,
     ):
         """Provide constructor to Mirobot with own config as param. Check the current state of the robot. If state = 'Alarm', ask to home to unlock movement. If no homing is requested, try to unlock axes without homing.
 
@@ -105,7 +109,7 @@ class Mirobot(WlkataMirobot):
             self.set_speed(1500)
 
         for pose in trajectory:
-            self.go_to_axis(
+            self.linear_interpolation(
                 pose.x,
                 pose.y,
                 pose.z,
@@ -113,3 +117,5 @@ class Mirobot(WlkataMirobot):
                 pose.b,
                 pose.c,
             )
+
+        return self.linear_interpolation(*destination.astuple())
