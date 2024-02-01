@@ -20,20 +20,20 @@ class MirobotRunner:
         self.robot = Mirobot(config.mirobot_portname, config.mirobot_debug)
         # Nodes to listen for (there is a mapping topic->node)
         self.triggers_and_routines = []
-        self.conveyor_belt_output_location: RobotPose = RobotPose(
+        self.conveyor_belt_output_location = RobotPose(
             config.conveyor_belt_output_location
         )
-        self.conveyor_belt_intermediate_locations: [RobotPose] = [
+        self.conveyor_belt_intermediate_locations = [
             RobotPose(pos) for pos in config.conveyor_belt_intermediate_locations
         ]
-        self.conveyor_belt_input_location: RobotPose = RobotPose(
+        self.conveyor_belt_input_location = RobotPose(
             config.conveyor_belt_input_location
         )
-        self.store_locations: [RobotPose] = [
+        self.store_locations = [
             RobotPose(pos) for pos in config.store_locations
         ]
         self.stored_items: int = config.stored_items_initial
-
+        self.zero_position = RobotPose(np.asarray(0.,0.,0.,0.,0.,0.))
 
     def datachange_notification(self, node: Node, val, data):
         """
@@ -50,28 +50,45 @@ class MirobotRunner:
                     routine()
                 else:
                     mr_logger.error(
-                        f"Following routine does not exist in MirobotRunner: {routine}"
+                        f"Following routine does not exist in MirobotRunner: {routine}. Check config"
                     )
                 return
 
     def put_from_conveyor_belt_output(self):
-        print(f"Picking up item at", self.conveyor_belt_output_location.astuple())
+        mr_logger.info(f"ITEM-OUTPUT->ITEM-INPUT")
         self.robot.move_along_trajectory(self.conveyor_belt_output_location, self.conveyor_belt_intermediate_locations)
         self.robot.pick_up()
         self.robot.move_along_trajectory(self.conveyor_belt_input_location, self.conveyor_belt_intermediate_locations)
         self.robot.drop()
+        self.robot.go_to_zero()
+
 
     def store_item(self):
-        # TODO
-        pass
+        mr_logger.info(f"ITEM-OUTPUT->STORE[{self.stored_items}]")
+        self.robot.move_along_trajectory(self.conveyor_belt_output_location, self.conveyor_belt_intermediate_locations)
+        self.robot.pick_up()
+        self.robot.move_along_trajectory(self.store_locations[self.stored_items])
+        self.robot.drop()
+        self.robot.move_along_trajectory(self.zero_position,self.conveyor_belt_intermediate_locations)
+
+        self.stored_items += 1
 
     def put_from_store(self):
-        # TODO
-        pass
+        if self.stored_items < 1:
+            mr_logger.warn("No items in store or wrong configuration values")
+        mr_logger.info(f"STORE[{self.stored_items}]->ITEM-INPUT")
+        self.robot.move_along_trajectory(self.store_locations[self.stored_items], self.conveyor_belt_intermediate_locations)
+        self.robot.pick_up()
+        self.robot.move_along_trajectory(self.conveyor_belt_input_location, self.conveyor_belt_intermediate_locations)
+        self.robot.drop()
+        self.robot.go_to_zero()
+
+        self.stored_items -= 1
+
 
     async def listen_for_opcua_events(self):
         url = config.opcua_server_url
-        print(f"Connecting to {url}...")
+        mr_logger.info(f"Connecting to {url}...")
 
         async with Client(url=url) as client:
             # Get nodes for topics
