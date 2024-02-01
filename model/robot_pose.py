@@ -16,13 +16,13 @@ class RobotPose:
         # Assuming base is zero. No rotation
         self.base = np.zeros(3) 
 
-    def __init__(self, np: np.ndarray):
-        self.x = np[0]
-        self.y = np[1]
-        self.z = np[2]
-        self.a = np[3]
-        self.b = np[4]
-        self.c = np[5]
+    def __init__(self, np_arr: np.ndarray):
+        self.x = np_arr[0]
+        self.y = np_arr[1]
+        self.z = np_arr[2]
+        self.a = np_arr[3]
+        self.b = np_arr[4]
+        self.c = np_arr[5]
         # Assuming base is zero. No rotation
         self.base = np.zeros(3) 
 
