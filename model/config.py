@@ -30,11 +30,11 @@ class Config:
         # OPC UA
         self.opcua_server_urls = ast.literal_eval(config_dict["opcua_server_urls"])
 
-        # For each topic, a value should be given where the mirobot shall trigger
-        self.opcua_topics: list() = ast.literal_eval(config_dict["opcua_topics"])
+        # For each node, a value should be given where the mirobot shall trigger
+        self.opcua_nodes: list() = ast.literal_eval(config_dict["opcua_nodes"])
         self.opcua_values: list() = ast.literal_eval(config_dict["opcua_values"])
         self.opcua_routines: list() = ast.literal_eval(config_dict["opcua_routines"])
-        assert len(self.opcua_topics) == len(self.opcua_values) and len(
+        assert len(self.opcua_nodes) == len(self.opcua_values) and len(
             self.opcua_values
         ) == len(self.opcua_routines)
 
