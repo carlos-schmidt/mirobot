@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from asyncua import Client, Node
+from asyncua import Client
 
 from model.config import Config
 
@@ -33,23 +33,27 @@ class EventListener:
         clients = []
 
         for url in set(self.config.opcua_server_urls):
-            new_client = Client(url=url)
-            clients.append(new_client)
-            await new_client.connect()
+            print("Connecting to url", url)
+            async with Client(url=url) as new_client:
+                print("Connected to url", url)
 
-            # Get nodes by nodeID
-            self.nodes_triggers_routines = [
-                (new_client.get_node(node_id), value, routine)
-                for _url, node_id, value, routine in utvr
-                if url == _url
-            ]
+                clients.append(new_client)
 
-            # One handler for all nodes. In datachange_notification the decision is made what to do.
-            subscription = await new_client.create_subscription(
-                self.config.opcua_polling_rate, self
-            )
-            # We subscribe to data changes for two nodes (variables).
-            await subscription.subscribe_data_change(self.config.opcua_nodes)
+                await new_client.connect()
+
+                # Get nodes by nodeID
+                self.nodes_triggers_routines = [
+                    (new_client.get_node(node_id), value, routine)
+                    for _url, node_id, value, routine in utvr
+                    if url == _url
+                ]
+
+                # One handler for all nodes. In datachange_notification the decision is made what to do.
+                subscription = await new_client.create_subscription(
+                    self.config.opcua_polling_rate, self
+                )
+                # We subscribe to data changes for two nodes (variables).
+                await subscription.subscribe_data_change(self.config.opcua_nodes)
 
         return clients
 
