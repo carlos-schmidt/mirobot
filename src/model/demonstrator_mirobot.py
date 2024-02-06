@@ -3,12 +3,11 @@ from collections.abc import Callable
 import logging
 
 import numpy as np
-from model.config import Config
-from model.mirobot_wrapper import Mirobot
-from model.robot_pose import RobotPose
+from .config import Config
+from .mirobot_wrapper import Mirobot
+from .robot_pose import RobotPose
 
-logging.basicConfig(level=logging.INFO)
-dem_logger = logging.getLogger("MirobotRunner")
+_logger = logging.getLogger(__name__)
 
 allowed_routines = ["put_from_conveyor_belt_output", "store_item", "put_from_store"]
 
@@ -60,7 +59,7 @@ class DemonstratorMirobot(Mirobot):
             self.routine()
 
     def put_from_conveyor_belt_output(self):
-        dem_logger.info(f"ITEM-OUTPUT->ITEM-INPUT")
+        _logger.info(f"ITEM-OUTPUT->ITEM-INPUT")
         self.move_along_trajectory(
             self.conv_belt_out,
             self.conv_belt_intermediate,
@@ -74,7 +73,7 @@ class DemonstratorMirobot(Mirobot):
         self.go_to_zero()
 
     def store_item(self):
-        dem_logger.info(f"ITEM-OUTPUT->STORE[{self.stored_items}]")
+        _logger.info(f"ITEM-OUTPUT->STORE[{self.stored_items}]")
         self.move_along_trajectory(
             self.conv_belt_out,
             self.conv_belt_intermediate,
@@ -88,9 +87,9 @@ class DemonstratorMirobot(Mirobot):
 
     def put_from_store(self):
         if self.stored_items < 1:
-            dem_logger.warn("No items in store or wrong configuration values")
+            _logger.warn("No items in store or wrong configuration values")
             return
-        dem_logger.info(f"STORE[{self.stored_items}]->ITEM-INPUT")
+        _logger.info(f"STORE[{self.stored_items}]->ITEM-INPUT")
         self.move_along_trajectory(
             self.store_locations[self.stored_items],
             self.conv_belt_intermediate,

@@ -3,11 +3,10 @@ from time import sleep
 from typing import List
 import numpy as np
 from wlkata_mirobot import WlkataMirobot, WlkataMirobotTool
-from model.config import Config
-from model.robot_pose import RobotPose
+from .config import Config
+from .robot_pose import RobotPose
 
 
-logging.basicConfig(level=logging.WARN)
 _logger = logging.getLogger("Mirobot")
 
 
@@ -44,14 +43,13 @@ def _print_response(response):
 
 class Mirobot(WlkataMirobot):
     def __init__(self, config: Config, default_to_zero: bool):
-        """Provide constructor to Mirobot. Check the current state of the robot. If state = 'Alarm', ask to home to unlock movement. If no homing is requested, try to unlock axes without homing.
+        """Provide constructor to Mirobot. 
+        Check the current state of the robot. 
+        If state = 'Alarm', ask to home to unlock movement. 
 
         Args:
-            mirobot_portname (str): mirobot port name for base class
-            mirobot_debug (str): Mirobot base class debug
+            config (Config): Configuration
             default_to_zero (bool, optional): Go to zero at the end of the initialization process. Defaults to True.
-            tool_length (float, optional): The length of the tool added to the standard endeffector. Defaults to 0 if the coordinates were computed with the tool attached.
-
         """
         super().__init__(portname=config.mirobot_portname, debug=config.mirobot_debug)
 
