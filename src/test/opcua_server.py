@@ -47,9 +47,10 @@ async def main():
                 k += 1
                 v = 22 + k % 2
                 await myvar.write_value(v)
-                await asyncio.sleep(5)
+                await asyncio.sleep(1)
                 print(
-                    await server.get_node('ns=3;s="MeasuringStationStep"').read_value()
+                    'ns=3;s="MeasuringStationStep" VALUE=',
+                    await server.get_node('ns=3;s="MeasuringStationStep"').read_value(),
                 )
 
         except KeyboardInterrupt:

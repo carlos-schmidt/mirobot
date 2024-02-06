@@ -1,7 +1,10 @@
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logging.getLogger('asyncua').setLevel(logging.WARNING)
 import asyncio
 from src.mirobot_runner import MirobotEventListener
 from src.model.config import Config
-import logging
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

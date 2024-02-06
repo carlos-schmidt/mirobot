@@ -1,7 +1,7 @@
 from math import sqrt
 
 import numpy as np
-from model.robot_pose import RobotPose
+from ..model.robot_pose import RobotPose
 
 
 def assert_similar(this, that, digits: int = 8):
