@@ -1,69 +1,61 @@
-import asyncio
 from asyncua import ua, Server, Node
 from threading import Thread
 import logging
 import time
-from math import sin
 import sys
+import asyncio
 
 sys.path.insert(0, "..")
 
 
-class VarUpdater(Thread):
-    def __init__(self, var):
-        Thread.__init__(self)
-        self._stopev = False
-        self.var = var
-
-    def stop(self):
-        self._stopev = True
-
-    def run(self):
-        k = 0
-        while not self._stopev:
-            k += 1
-
-            v = 22 + k % 2
-            self.var.set_value(v)
-            time.sleep(2)
-
-
 async def main():
-    # optional: setup logging
-    logging.basicConfig(level=logging.WARN)
-
-    # now setup our server
+    _logger = logging.getLogger(__name__)
+    # setup our server
     server = Server()
     await server.init()
+    server.set_endpoint("opc.tcp://0.0.0.0:4840/freeopcua/server/")
 
-    server.set_endpoint("opc.tcp://localhost:4840/freeopcua/server/")
-    server.set_server_name("FreeOpcUa Example Server")
-    
-    # set all possible endpoint policies for clients to connect through
-    server.set_security_policy([ua.SecurityPolicyType.NoSecurity])
-
-    # setup our own namespace
-    uri = "http://iosb.fraunhofer.example"
-    idx = await server.register_namespace(uri)
-
+    # set up our own namespace, not really necessary but should as spec
+    uri = "http://examples.freeopcua.github.io"
+    _ = await server.register_namespace(uri)
+    ns3 = await server.register_namespace(uri + "/")
+    print(f"##### ##### REGISTERING ON NAMESPACE ns={ns3} ##### #####")
     # populating our address space
+    # server.nodes, contains links to very common nodes like objects and root
+    myobj: Node = await server.nodes.objects.add_object(ns3, "obj")
+    myvar = await myobj.add_variable(
+        ua.NodeId('"test"', 3), '"test"', 420, ua.VariantType.Int16
+    )
+    myvar = await myobj.add_variable(
+        ua.NodeId('"test_2"', 3), '"test_2"', 404, ua.VariantType.Int16
+    )
+    myvar = await myobj.add_variable(
+        ua.NodeId('"MeasuringStationStep"', 3),
+        '"MeasuringStationStep"',
+        22,
+        ua.VariantType.Int64,
+    )
 
-    # create directly some objects and variables
-    myobj: Node = await server.nodes.objects.add_object(idx, "MeasuringStationStep")
-    myvar = await myobj.add_variable(idx, "MyVariable", 22, ua.VariantType.Int16)
+    # Set MyVariable to be writable by clients
+    await myvar.set_writable()
 
-    # starting!
-    await server.start()
-    # print(await server.get_endpoints())
-    # vup = VarUpdater(myvar)  # just a class to update the variable
-    # vup.start()
-    try:
-        while True:
-            time.sleep(0.1)
-    except KeyboardInterrupt:
-        vup.stop()
-        await server.stop()
+    _logger.info("Starting server!")
+    async with server:
+        try:
+            k = 0
+            while True:
+                k += 1
+                v = 22 + k % 2
+                await myvar.write_value(v)
+                await asyncio.sleep(5)
+                print(
+                    await server.get_node('ns=3;s="MeasuringStationStep"').read_value()
+                )
+
+        except KeyboardInterrupt:
+            pass
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    logging.basicConfig(level=logging.INFO)
+    asyncio.run(main(), debug=True)
