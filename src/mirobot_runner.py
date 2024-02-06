@@ -1,9 +1,9 @@
-import asyncio
 import logging
-import numpy as np
+from threading import Thread
+
+from src.test.mock_demo_miro import MockDemonstratorMirobot
 
 from .model.config import Config
-from .model.demonstrator_mirobot import DemonstratorMirobot
 from .model.event_listener import EventListener
 
 _logger = logging.getLogger(__name__)
@@ -14,7 +14,7 @@ class MirobotEventListener(EventListener):
         self.nodes_triggers_routines = []
         super().__init__(config)
 
-        self.robot = DemonstratorMirobot(config)
+        self.robot = MockDemonstratorMirobot(config)
 
     def datachange_notification(self, node, val, data):
         """
@@ -25,10 +25,11 @@ class MirobotEventListener(EventListener):
         _logger.debug(f"Got datachange notification:\n{node}\n{val}\n{data}")
         for trigger_node, trigger_value, routine in self.nodes_triggers_routines:
             if str(node) == trigger_node and str(val) == str(trigger_value):
-                _logger.info("Starting robot interaction")
-                # Call routine by its name
-                self.exec_robo_func(routine)
+                # _logger.info("Starting robot interaction")
+                t = Thread(target=self.exec_robo_func, args=(routine,))
+                t.start()
                 return
 
+    
     def exec_robo_func(self, func):
-        return self.robot.execute_routine(func_name=func)
+        self.robot.execute_routine(routine_name=func)
