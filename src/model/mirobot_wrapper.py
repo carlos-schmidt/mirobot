@@ -43,14 +43,8 @@ def _print_response(response):
 
 
 class Mirobot(WlkataMirobot):
-    def __init__(
-        self,
-        mirobot_portname: str,
-        mirobot_debug: bool,
-        default_to_zero: bool = True,
-        tool_length: float = 0,
-    ):
-        """Provide constructor to Mirobot with own config as param. Check the current state of the robot. If state = 'Alarm', ask to home to unlock movement. If no homing is requested, try to unlock axes without homing.
+    def __init__(self, config: Config, default_to_zero: bool):
+        """Provide constructor to Mirobot. Check the current state of the robot. If state = 'Alarm', ask to home to unlock movement. If no homing is requested, try to unlock axes without homing.
 
         Args:
             mirobot_portname (str): mirobot port name for base class
@@ -59,12 +53,12 @@ class Mirobot(WlkataMirobot):
             tool_length (float, optional): The length of the tool added to the standard endeffector. Defaults to 0 if the coordinates were computed with the tool attached.
 
         """
-        super().__init__(portname=mirobot_portname, debug=mirobot_debug)
+        super().__init__(portname=config.mirobot_portname, debug=config.mirobot_debug)
 
         self._blocking = False
         self._initialized = False
         self.set_tool_type(WlkataMirobotTool.SUCTION_CUP)
-        self.set_tool_offset(0, 0, tool_length)  # height of whole tool (mm)
+        self.set_tool_offset(0, 0, 0)  # size of whole tool (mm)
 
         if self.get_status().state == "Alarm":
             yn = input("Current state is Alarm. Start homing procedure? (y/n)")
