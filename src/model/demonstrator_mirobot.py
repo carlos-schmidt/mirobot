@@ -1,8 +1,7 @@
-import asyncio
-from collections.abc import Callable
 import logging
-
+from threading import Lock
 import numpy as np
+
 from .config import Config
 from .mirobot_wrapper import Mirobot
 from .robot_pose import RobotPose
@@ -12,7 +11,7 @@ _logger = logging.getLogger(__name__)
 allowed_routines = ["put_from_conveyor_belt_output", "store_item", "put_from_store"]
 
 
-class RoutineNotFoundError:
+class RoutineNotFoundException(BaseException):
     pass
 
 
@@ -23,7 +22,7 @@ class DemonstratorMirobot(Mirobot):
         default_to_zero: bool = True,
     ):
         super().__init__(config, default_to_zero)
-        self.routine_mutex = asyncio.Lock()
+        self.mutex = Lock()
 
         self.conv_belt_out = RobotPose(np.asarray(config.conveyor_belt_output_location))
         self.conv_belt_intermediate = [
@@ -36,27 +35,6 @@ class DemonstratorMirobot(Mirobot):
         ]
         self.stored_items: int = config.stored_items_initial
         self.zero_position = RobotPose(np.asarray((0.0, 0.0, 0.0, 0.0, 0.0, 0.0)))
-
-    def execute_routine(self, routine_name: str):
-        """Run a routine if it exists.
-        Only one routine is allowed at a time.
-        The robot always returns to the zero location at the end of a routine.
-
-        Args:
-            routine_name (str): Name of the routine to be executed
-
-        Raises:
-            RoutineNotFoundError: Routine with the given name not found
-        """
-        if routine_name not in allowed_routines or not hasattr(self, routine_name):
-            raise RoutineNotFoundError()
-
-        # Get the function
-        routine = getattr(self, routine)
-
-        # Mutex to ensure no concurrent moves being made
-        with self.routine_mutex:
-            self.routine()
 
     def put_from_conveyor_belt_output(self):
         _logger.info(f"ITEM-OUTPUT->ITEM-INPUT")
@@ -100,3 +78,22 @@ class DemonstratorMirobot(Mirobot):
         self.go_to_zero()
 
         self.stored_items -= 1
+
+    def execute_routine(self, routine_name: str):
+        """Run a routine if it exists.
+        Only one routine is allowed at a time.
+        The robot always returns to the zero location at the end of a routine.
+
+        Args:
+            routine_name (str): Name of the routine to be executed
+
+        Raises:
+            RoutineNotFoundError: Routine with the given name not found
+        """
+        if routine_name not in allowed_routines:
+            _logger.warn(routine_name, "not in", allowed_routines)
+            raise RoutineNotFoundException()
+
+        # Mutex to ensure no concurrent moves being made
+        with self.mutex:
+            getattr(self, routine_name)()
