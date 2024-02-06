@@ -14,13 +14,15 @@ class EventListener:
         self.nodes_triggers_routines = []
 
     def datachange_notification(self, _, __, ___):
-        _logger("This should be implemented by a EventListener subclass")
+        _logger.error("This should be implemented by a EventListener subclass")
 
     def status_change_notification(self, status):
-        _logger.info(status)
+        _logger.debug("Got a status_change_notification!")
+        _logger.debug(status)
 
     def event_notification(self, event):
-        _logger.info(event)
+        _logger.debug("Got a event_notification!")
+        _logger.debug(event)
 
     async def create_opcua_subscriptions(self):
         utvr = zip(
@@ -35,10 +37,16 @@ class EventListener:
             print("Connecting to url", url)
             new_client = Client(url=url)
 
-            clients.append(new_client)
             # Fixes some weird bug https://github.com/FreeOpcUa/python-opcua/issues/629#issuecomment-1591109039
             # await new_client.disconnect()
-            await new_client.connect()
+            try:
+                await new_client.connect()
+            except asyncio.exceptions.TimeoutError:
+                _logger.warn(
+                    f"Client {url} not available! Continuing without this client."
+                )
+                continue
+            clients.append(new_client)
             print("Connected to url", url)
             # One handler for all nodes. In datachange_notification the decision is made what to do.
             subscription = await new_client.create_subscription(
