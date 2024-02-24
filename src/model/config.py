@@ -32,7 +32,7 @@ class Config:
 
         # For each node, a value should be given where the mirobot shall trigger
         self.opcua_nodes = ast.literal_eval(config_dict["opcua_nodes"])
-        self.opcua_value = ast.literal_eval(config_dict["opcua_values"])
+        self.opcua_values = ast.literal_eval(config_dict["opcua_values"])
         self.opcua_routines = ast.literal_eval(config_dict["opcua_routines"])
         assert len(self.opcua_nodes) == len(self.opcua_values) and len(
             self.opcua_values
