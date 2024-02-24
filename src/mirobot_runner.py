@@ -17,21 +17,21 @@ class MirobotEventListener(OpcUAEventListener, HTTPEventListener):
         super().__init__(config)
 
         self.accepted_endpoints = config.opcua_routines + ["empty_store"]
+        self.register_endpoints()
 
         self.robot = MockDemonstratorMirobot(config)
-        self.register_endpoints()
 
     def register_endpoints(self):
         """Register HTTP endpoints to listen on"""
         for endpoint in self.accepted_endpoints:
             # This prepares the function to be executed with a predefined argument
             self.register_endpoint(
-                endpoint=endpoint,
+                endpoint="/" + endpoint,
                 method="POST",
                 handler=partial(self.exec_robo_func, endpoint),
             )
 
-        self.register_endpoint("status", "GET", self.get_status)
+        self.register_endpoint("/status", "GET", self.get_status)
 
     def datachange_notification(self, node, val, data):
         """
