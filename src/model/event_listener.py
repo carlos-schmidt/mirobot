@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import List
 from asyncua import Client
 
 from .config import Config
@@ -7,14 +8,15 @@ from .config import Config
 _logger = logging.getLogger(__name__)
 
 
-class EventListener:
+class OpcUAEventListener:
     def __init__(self, config: Config):
         self.config: Config = config
         self.event_call_mutex = asyncio.Lock()
         self.nodes_triggers_routines = []
+        _logger.setLevel(level="INFO")
 
     def datachange_notification(self, _, __, ___):
-        _logger.error("This should be implemented by a EventListener subclass")
+        _logger.error("This should be implemented by a subclass")
 
     def status_change_notification(self, status):
         _logger.debug("Got a status_change_notification!")
@@ -64,7 +66,7 @@ class EventListener:
         return clients
 
     async def listen_for_opcua_events(self):
-        clients: [Client] = await self.create_opcua_subscriptions()
+        clients: List[Client] = await self.create_opcua_subscriptions()
         try:
             print("Subscribed to OPCUA nodes.")
             try:
@@ -76,3 +78,24 @@ class EventListener:
         except KeyboardInterrupt:
             _logger.info("Disconnecting from opcua servers...")
             [client.disconnect() for client in clients]
+
+
+from http.server import SimpleHTTPRequestHandler
+from flask import Flask
+
+class HTTPEventListener:
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._app = Flask(__name__)
+        self._app.run()
+
+    def register_endpoint(self, endpoint:str, method:str='GET', handler=None):
+        """Register an endpoint at endpoint path with function handler
+
+        Args:
+            endpoint (str): Endpoint path
+            method (str): HTTP Method (GET POST PUT DELETE ...)
+            handler (function): Function to execute if endpoint is called
+        """
+        self._app.add_url_rule(rule=endpoint, endpoint=endpoint, view_func=handler, methods=[str(method)])
