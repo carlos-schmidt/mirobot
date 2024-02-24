@@ -1,20 +1,22 @@
 import logging
 from threading import Thread
+from src.model.demonstrator_mirobot import DemonstratorMirobot
 
 from src.test.mock_demo_miro import MockDemonstratorMirobot
 
 from .model.config import Config
-from .model.event_listener import EventListener
+from .model.event_listener import HTTPEventListener, OpcUAEventListener
 
 _logger = logging.getLogger(__name__)
 
 
-class MirobotEventListener(EventListener):
+class MirobotEventListener(OpcUAEventListener, HTTPEventListener):
     def __init__(self, config: Config):
         self.nodes_triggers_routines = []
         super().__init__(config)
 
         self.robot = MockDemonstratorMirobot(config)
+        self.register_endpoint("status", "GET", self.get_status)
 
     def datachange_notification(self, node, val, data):
         """
@@ -30,6 +32,8 @@ class MirobotEventListener(EventListener):
                 t.start()
                 return
 
-    
+    def get_status(self):
+        return {"stored_items": self.robot.stored_items}
+
     def exec_robo_func(self, func):
         self.robot.execute_routine(routine_name=func)

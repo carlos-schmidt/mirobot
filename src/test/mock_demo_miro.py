@@ -16,6 +16,7 @@ class MockDemonstratorMirobot:
         self.mutex = Lock()
         self.action_queue = 0
         self.sanity = 0
+        self.stored_items = 42
 
     def put_from_conveyor_belt_output(self):
         print(f"ENTERING {inspect.stack()[0][3]}")
