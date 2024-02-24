@@ -99,3 +99,4 @@ class HTTPEventListener:
             handler (function): Function to execute if endpoint is called
         """
         type(self).app.add_url_rule(rule=endpoint, endpoint=endpoint, view_func=handler, methods=[str(method)])
+        _logger.info(f"Registered HTTP endpoint {endpoint} for method {method}")
