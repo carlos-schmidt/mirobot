@@ -1,7 +1,8 @@
 import logging
 from threading import Thread
-from src.model.demonstrator_mirobot import DemonstratorMirobot
+from functools import partial
 
+from src.model.demonstrator_mirobot import DemonstratorMirobot
 from src.test.mock_demo_miro import MockDemonstratorMirobot
 
 from .model.config import Config
@@ -15,7 +16,21 @@ class MirobotEventListener(OpcUAEventListener, HTTPEventListener):
         self.nodes_triggers_routines = []
         super().__init__(config)
 
+        self.accepted_endpoints = config.opcua_routines + ["empty_store"]
+
         self.robot = MockDemonstratorMirobot(config)
+        self.register_endpoints()
+
+    def register_endpoints(self):
+        """Register HTTP endpoints to listen on"""
+        for endpoint in self.accepted_endpoints:
+            # This prepares the function to be executed with a predefined argument
+            self.register_endpoint(
+                endpoint=endpoint,
+                method="POST",
+                handler=partial(self.exec_robo_func, endpoint),
+            )
+
         self.register_endpoint("status", "GET", self.get_status)
 
     def datachange_notification(self, node, val, data):
@@ -28,12 +43,11 @@ class MirobotEventListener(OpcUAEventListener, HTTPEventListener):
         for trigger_node, trigger_value, routine in self.nodes_triggers_routines:
             if str(node) == trigger_node and str(val) == str(trigger_value):
                 # _logger.info("Starting robot interaction")
-                t = Thread(target=self.exec_robo_func, args=(routine,))
-                t.start()
-                return
+                self.exec_robo_func(routine)
+                break
 
     def get_status(self):
         return {"stored_items": self.robot.stored_items}
 
     def exec_robo_func(self, func):
-        self.robot.execute_routine(routine_name=func)
+        Thread(target=self.robot.execute_routine, args=(func,)).start()
