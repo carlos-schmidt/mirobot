@@ -79,6 +79,16 @@ class DemonstratorMirobot(Mirobot):
 
         self.stored_items -= 1
 
+    def empty_store(self):
+        if self.stored_items < 1:
+            _logger.warn("No items in store or wrong configuration values")
+            return
+        _logger.info(f"EMPTYING STORE")
+
+        while self.stored_items > 0:
+            self.execute_routine(self.put_from_store.__name__)
+
+
     def execute_routine(self, routine_name: str):
         """Run a routine if it exists.
         Only one routine is allowed at a time.
