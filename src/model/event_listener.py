@@ -80,17 +80,17 @@ class OpcUAEventListener:
             [client.disconnect() for client in clients]
 
 
-from http.server import SimpleHTTPRequestHandler
 from flask import Flask
 
 class HTTPEventListener:
+    app = Flask(__name__)
 
-    def __init__(self) -> None:
-        super().__init__()
-        self._app = Flask(__name__)
-        self._app.run()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)  # forwards all unused arguments
+        type(self).app.run()
 
     def register_endpoint(self, endpoint:str, method:str='GET', handler=None):
+        global app
         """Register an endpoint at endpoint path with function handler
 
         Args:
@@ -98,4 +98,4 @@ class HTTPEventListener:
             method (str): HTTP Method (GET POST PUT DELETE ...)
             handler (function): Function to execute if endpoint is called
         """
-        self._app.add_url_rule(rule=endpoint, endpoint=endpoint, view_func=handler, methods=[str(method)])
+        type(self).app.add_url_rule(rule=endpoint, endpoint=endpoint, view_func=handler, methods=[str(method)])
