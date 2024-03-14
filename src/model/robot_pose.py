@@ -60,17 +60,17 @@ class RobotPose:
         return " ".join(
             [
                 "X:",
-                self.x,
+                str(self.x),
                 "Y:",
-                self.y,
+                str(self.y),
                 "Z:",
-                self.z,
+                str(self.z),
                 "A:",
-                self.a,
+                str(self.a),
                 "B:",
-                self.b,
+                str(self.b),
                 "C:",
-                self.c,
+                str(self.c),
             ]
         )
 

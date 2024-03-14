@@ -8,6 +8,9 @@ from src.model.config import Config
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    config = Config("./config.cfg", "DEFAULT")
+    config = Config("./custom-config.cfg", "DEFAULT")
     mirobot_runner = MirobotEventListener(config)
     asyncio.run(mirobot_runner.listen_for_opcua_events())
+
+
+# TODO UPDATE CONV OUTPUT LOCATION 

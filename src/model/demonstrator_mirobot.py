@@ -33,14 +33,18 @@ class DemonstratorMirobot(Mirobot):
         self.store_locations = [
             RobotPose(np.asarray(pos)) for pos in config.store_locations
         ]
-        self.stored_items: int = config.stored_items_initial
+        self.stored_items: int = int(config.stored_items_initial)
         self.zero_position = RobotPose(np.asarray((0.0, 0.0, 0.0, 0.0, 0.0, 0.0)))
 
     def put_from_conveyor_belt_output(self):
+        # 50% of storing or putting back
+        if np.random.choice([False, True]):
+            self.store_item()
+            return
         _logger.info(f"ITEM-OUTPUT->ITEM-INPUT")
         self.move_along_trajectory(
             self.conv_belt_out,
-            self.conv_belt_intermediate,
+            self.conv_belt_intermediate,0.1
         )
         self.pick_up()
         self.move_along_trajectory(
@@ -51,29 +55,44 @@ class DemonstratorMirobot(Mirobot):
         self.go_to_zero()
 
     def store_item(self):
+        if self.stored_items == 6:
+            _logger.warn("Store full or wrong configuration values")
+            return
         _logger.info(f"ITEM-OUTPUT->STORE[{self.stored_items}]")
+
         self.move_along_trajectory(
             self.conv_belt_out,
-            self.conv_belt_intermediate,
+            self.conv_belt_intermediate
         )
+        store_intermediate_1 = self.conv_belt_out - RobotPose(np.asarray([0,0,-70,0,0,0])) # Z coord + 70
+        store_intermediate = self.store_locations[self.stored_items]- RobotPose(np.asarray([0,0,-35,0,0,0])) # Z coord + 35
+
         self.pick_up()
-        self.move_along_trajectory(self.store_locations[self.stored_items])
+        self.move_along_trajectory(self.store_locations[self.stored_items], [store_intermediate_1, store_intermediate])
+        self.blow()
+        self.move_along_trajectory(self.conv_belt_intermediate[0], [store_intermediate])
         self.drop()
-        self.move_along_trajectory(self.zero_position, self.conv_belt_intermediate)
-
+        self.go_to_zero()
         self.stored_items += 1
-
+        
     def put_from_store(self):
         if self.stored_items < 1:
             _logger.warn("No items in store or wrong configuration values")
             return
         _logger.info(f"STORE[{self.stored_items}]->ITEM-INPUT")
+
+        store_intermediate = self.store_locations[self.stored_items]
+        store_intermediate = store_intermediate - RobotPose(np.asarray([0,0,-50,0,0,0])) # Z coord + 50
+
+        self.move_along_trajectory(
+            store_intermediate,self.conv_belt_intermediate
+        )
         self.move_along_trajectory(
             self.store_locations[self.stored_items],
-            self.conv_belt_intermediate,
+            [store_intermediate]
         )
         self.pick_up()
-        self.move_along_trajectory(self.conv_belt_in, self.conv_belt_intermediate)
+        self.move_along_trajectory(self.conv_belt_in, [store_intermediate]+ self.conv_belt_intermediate)
         self.drop()
         self.go_to_zero()
 

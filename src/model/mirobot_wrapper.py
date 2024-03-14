@@ -81,11 +81,14 @@ class Mirobot(WlkataMirobot):
         """Turn air pump off to deactivate suction gripper"""
         self.pump_off()
 
+    def blow(self):
+        self.pump_blowing()
+        
     def move_along_trajectory(
         self,
         destination: RobotPose,
         trajectory: List[RobotPose],
-        speed: float = 0.5,
+        speed: float = 1,
     ):
         """Move to destination along a trajectory defined by positions in trajectory at a specified speed
 
@@ -109,5 +112,4 @@ class Mirobot(WlkataMirobot):
                 pose.b,
                 pose.c,
             )
-
         return self.linear_interpolation(*destination.astuple())

@@ -36,20 +36,23 @@ class OpcUAEventListener:
         clients = []
 
         for url in set(self.config.opcua_server_urls):
-            print("Connecting to url", url)
+            _logger.info(f"Connecting to url {url} ...")
             new_client = Client(url=url)
 
-            # Fixes some weird bug https://github.com/FreeOpcUa/python-opcua/issues/629#issuecomment-1591109039
-            # await new_client.disconnect()
             try:
                 await new_client.connect()
             except asyncio.exceptions.TimeoutError:
                 _logger.warn(
-                    f"Client {url} not available! Continuing without this client."
+                    f"Client {url} not available due to asyncio.exceptions.TimeoutError! Continuing without this client."
+                )
+                continue
+            except ConnectionRefusedError:
+                _logger.warn(
+                    f"Client {url} not available due to ConnectionRefusedError! Continuing without this client."
                 )
                 continue
             clients.append(new_client)
-            print("Connected to url", url)
+            _logger.info(f"Connected to url {url}")
             # One handler for all nodes. In datachange_notification the decision is made what to do.
             subscription = await new_client.create_subscription(
                 float(self.config.opcua_polling_rate), self
@@ -67,14 +70,14 @@ class OpcUAEventListener:
 
     async def listen_for_opcua_events(self):
         clients: List[Client] = await self.create_opcua_subscriptions()
+        if len(clients)>0:
+            _logger.info("Subscribed to OPCUA nodes.")
+        else:
+            _logger.error("No OPCUA nodes available.")
+            return
         try:
-            print("Subscribed to OPCUA nodes.")
-            try:
-                while True:
-                    await asyncio.sleep(1)
-            except KeyboardInterrupt:
-                pass
-            # await asyncio.sleep(999_999_999)
+            while True:
+                await asyncio.sleep(1)
         except KeyboardInterrupt:
             _logger.info("Disconnecting from opcua servers...")
             [client.disconnect() for client in clients]

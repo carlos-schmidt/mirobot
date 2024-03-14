@@ -19,7 +19,7 @@ class MirobotEventListener(OpcUAEventListener, HTTPEventListener):
         self.accepted_endpoints = config.opcua_routines + ["empty_store"]
         self.register_endpoints()
 
-        self.robot = MockDemonstratorMirobot(config)
+        self.robot = DemonstratorMirobot(config)
 
     def register_endpoints(self):
         """Register HTTP endpoints to listen on"""
