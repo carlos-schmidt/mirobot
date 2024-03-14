@@ -106,7 +106,9 @@ class DemonstratorMirobot(Mirobot):
 
         while self.stored_items > 0:
             self.execute_routine(self.put_from_store.__name__)
-
+            
+    def get_status(self):
+        return self.stored_items
 
     def execute_routine(self, routine_name: str):
         """Run a routine if it exists.

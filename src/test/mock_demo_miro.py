@@ -45,6 +45,9 @@ class MockDemonstratorMirobot:
         self.sanity -= 1
         print(f"EXITING {inspect.stack()[0][3]}")
 
+    def get_status(self):
+        return self.stored_items
+    
     def execute_routine(self, routine_name: str):
         """Run a routine if it exists.
         Only one routine is allowed at a time.
