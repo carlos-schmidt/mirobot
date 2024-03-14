@@ -11,27 +11,36 @@ from .model.event_listener import HTTPEventListener, OpcUAEventListener
 _logger = logging.getLogger(__name__)
 
 
-class MirobotEventListener(OpcUAEventListener, HTTPEventListener):
+class MirobotEventListener(OpcUAEventListener):
     def __init__(self, config: Config):
         self.nodes_triggers_routines = []
-        super().__init__(config)
+        OpcUAEventListener.__init__(self, config)
+        self.http_listener = HTTPEventListener()
 
         self.accepted_endpoints = config.opcua_routines + ["empty_store"]
-        self.register_endpoints()
-
+        
+        self.register_http_endpoints(self.http_listener)
+        
+        # Start http server in different thread
+        self.http_listener.start()
+        
         self.robot = DemonstratorMirobot(config)
 
-    def register_endpoints(self):
-        """Register HTTP endpoints to listen on"""
+    def register_http_endpoints(self, http_listener: HTTPEventListener):
+        """Register HTTP endpoints to listen on
+
+        Args:
+            http_listener (HTTPEventListener): HTTP server instance
+        """
         for endpoint in self.accepted_endpoints:
             # This prepares the function to be executed with a predefined argument
-            self.register_endpoint(
+            http_listener.register_endpoint(
                 endpoint="/" + endpoint,
                 method="POST",
                 handler=partial(self.exec_robo_func, endpoint),
             )
 
-        self.register_endpoint("/status", "GET", self.get_status)
+        http_listener.register_endpoint("/status", "GET", partial(self.exec_robo_func, "get_status"))
 
     def datachange_notification(self, node, val, data):
         """

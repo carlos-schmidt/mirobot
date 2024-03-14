@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from threading import Thread
 from typing import List
 from asyncua import Client
 
@@ -70,7 +71,7 @@ class OpcUAEventListener:
 
     async def listen_for_opcua_events(self):
         clients: List[Client] = await self.create_opcua_subscriptions()
-        if len(clients)>0:
+        if len(clients) > 0:
             _logger.info("Subscribed to OPCUA nodes.")
         else:
             _logger.error("No OPCUA nodes available.")
@@ -85,14 +86,21 @@ class OpcUAEventListener:
 
 from flask import Flask
 
-class HTTPEventListener:
+
+class HTTPEventListener(Thread):
+    """Also called HTTP server"""
+
     app = Flask(__name__)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)  # forwards all unused arguments
-        type(self).app.run()
+    def __init__(self, host="127.0.0.1", port=5000):
+        super().__init__()
+        self.host = host
+        self.port = port
 
-    def register_endpoint(self, endpoint:str, method:str='GET', handler=None):
+    def run(self):
+        type(self).app.run(self.host, self.port)
+
+    def register_endpoint(self, endpoint: str, method: str = "GET", handler=None):
         global app
         """Register an endpoint at endpoint path with function handler
 
@@ -101,5 +109,7 @@ class HTTPEventListener:
             method (str): HTTP Method (GET POST PUT DELETE ...)
             handler (function): Function to execute if endpoint is called
         """
-        type(self).app.add_url_rule(rule=endpoint, endpoint=endpoint, view_func=handler, methods=[str(method)])
+        type(self).app.add_url_rule(
+            rule=endpoint, endpoint=endpoint, view_func=handler, methods=[str(method)]
+        )
         _logger.info(f"Registered HTTP endpoint {endpoint} for method {method}")
