@@ -40,7 +40,7 @@ class MirobotEventListener(OpcUAEventListener):
                 handler=partial(self.exec_robo_func, endpoint),
             )
 
-        http_listener.register_endpoint("/status", "GET", partial(self.exec_robo_func, "get_status"))
+        http_listener.register_endpoint("/get_stored_items", "GET", self.get_stored_items)
 
     def datachange_notification(self, node, val, data):
         """
@@ -55,8 +55,8 @@ class MirobotEventListener(OpcUAEventListener):
                 self.exec_robo_func(routine)
                 break
 
-    def get_status(self):
-        return {"stored_items": self.robot.stored_items}
+    def get_stored_items(self):
+        return {"value": self.robot.get_stored_items()}
 
     def exec_robo_func(self, func):
         Thread(target=self.robot.execute_routine, args=(func,)).start()

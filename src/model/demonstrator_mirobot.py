@@ -8,7 +8,7 @@ from .robot_pose import RobotPose
 
 _logger = logging.getLogger(__name__)
 
-allowed_routines = ["put_from_conveyor_belt_output", "store_item", "put_from_store"]
+allowed_routines = ["put_from_conveyor_belt_output", "store_item", "put_from_store", "empty_store", "get_stored_items"]
 
 
 class RoutineNotFoundException(BaseException):
@@ -37,8 +37,8 @@ class DemonstratorMirobot(Mirobot):
         self.zero_position = RobotPose(np.asarray((0.0, 0.0, 0.0, 0.0, 0.0, 0.0)))
 
     def put_from_conveyor_belt_output(self):
-        # 50% of storing or putting back
-        if np.random.choice([False, True]):
+        # 66% of storing, 33% of putting back
+        if np.random.choice([False, True, True]):
             self.store_item()
             return
         _logger.info(f"ITEM-OUTPUT->ITEM-INPUT")
@@ -79,16 +79,16 @@ class DemonstratorMirobot(Mirobot):
         if self.stored_items < 1:
             _logger.warn("No items in store or wrong configuration values")
             return
-        _logger.info(f"STORE[{self.stored_items}]->ITEM-INPUT")
+        _logger.info(f"STORE[{self.stored_items - 1}]->ITEM-INPUT")
 
-        store_intermediate = self.store_locations[self.stored_items]
+        store_intermediate = self.store_locations[self.stored_items - 1]
         store_intermediate = store_intermediate - RobotPose(np.asarray([0,0,-50,0,0,0])) # Z coord + 50
 
         self.move_along_trajectory(
             store_intermediate,self.conv_belt_intermediate
         )
         self.move_along_trajectory(
-            self.store_locations[self.stored_items],
+            self.store_locations[self.stored_items - 1],
             [store_intermediate]
         )
         self.pick_up()
@@ -105,9 +105,9 @@ class DemonstratorMirobot(Mirobot):
         _logger.info(f"EMPTYING STORE")
 
         while self.stored_items > 0:
-            self.execute_routine(self.put_from_store.__name__)
+            self.put_from_store()
             
-    def get_status(self):
+    def get_stored_items(self):
         return self.stored_items
 
     def execute_routine(self, routine_name: str):
@@ -128,3 +128,5 @@ class DemonstratorMirobot(Mirobot):
         # Mutex to ensure no concurrent moves being made
         with self.mutex:
             getattr(self, routine_name)()
+            
+        return True
