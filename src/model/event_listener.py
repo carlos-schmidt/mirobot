@@ -28,44 +28,33 @@ class OpcUAEventListener:
         _logger.debug(event)
 
     async def create_opcua_subscriptions(self):
-        utvr = zip(
-            self.config.opcua_server_urls,
-            self.config.opcua_nodes,
-            self.config.opcua_values,
-            self.config.opcua_routines,
-        )
         clients = []
 
-        for url in set(self.config.opcua_server_urls):
-            _logger.info(f"Connecting to url {url} ...")
-            new_client = Client(url=url)
+        for opcua_config in self.config.opcua_configs:
+            _url = opcua_config.get_url()
+            _logger.info(f"Connecting to url {_url} ...")
+            new_client = Client(url=_url)
 
             try:
                 await new_client.connect()
             except asyncio.exceptions.TimeoutError:
                 _logger.warn(
-                    f"Client {url} not available due to asyncio.exceptions.TimeoutError! Continuing without this client."
+                    f"Client {_url} not available due to asyncio.exceptions.TimeoutError! Continuing without this client."
                 )
                 continue
             except ConnectionRefusedError:
                 _logger.warn(
-                    f"Client {url} not available due to ConnectionRefusedError! Continuing without this client."
+                    f"Client {_url} not available due to ConnectionRefusedError! Continuing without this client."
                 )
                 continue
             clients.append(new_client)
-            _logger.info(f"Connected to url {url}")
+            _logger.info(f"Connected to url {_url}")
             # One handler for all nodes. In datachange_notification the decision is made what to do.
-            subscription = await new_client.create_subscription(
-                float(self.config.opcua_polling_rate), self
-            )
-            nodes = []
-            for _url, node_id, value, routine in utvr:
-                if url == _url:
-                    nodes.append(new_client.get_node(node_id))
-                    self.nodes_triggers_routines.append([node_id, value, routine])
-
-            # We subscribe to data changes for two nodes (variables).
-            await subscription.subscribe_data_change(nodes)
+            subscription = await new_client.create_subscription(opcua_config.get_rate(), self)
+            
+            await subscription.subscribe_data_change(new_client.get_node(opcua_config.get_node()))
+            
+            self.nodes_triggers_routines.append([opcua_config.get_node(), opcua_config.get_value(), opcua_config.get_routine()])
 
         return clients
 

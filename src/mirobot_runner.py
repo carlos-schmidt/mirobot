@@ -17,8 +17,8 @@ class MirobotEventListener(OpcUAEventListener):
         OpcUAEventListener.__init__(self, config)
         self.http_listener = HTTPEventListener()
 
-        self.accepted_endpoints = config.opcua_routines + ["empty_store"]
-        
+        self.accepted_endpoints = [cfg.get_routine() for cfg in config.opcua_configs] + ["empty_store"]
+        print(self.accepted_endpoints)
         self.register_http_endpoints(self.http_listener)
         
         # Start http server in different thread

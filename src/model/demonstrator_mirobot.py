@@ -42,11 +42,14 @@ class DemonstratorMirobot(Mirobot):
         self.stored_items: int = int(config.stored_items_initial)
         self.zero_position = RobotPose(np.asarray((0.0, 0.0, 0.0, 0.0, 0.0, 0.0)))
 
-    def put_from_conveyor_belt_output(self):
+    def handle_finished_item(self):
         # 66% of storing, 33% of putting back
         if np.random.choice([False, True, True]):
             self.store_item()
-            return
+        else:
+            self.put_from_conveyor_belt_output()
+
+    def put_from_conveyor_belt_output(self):
         _logger.info(f"ITEM-OUTPUT->ITEM-INPUT")
         self.move_along_trajectory(
             destination=self.conv_belt_out, trajectory=self.conv_belt_intermediates

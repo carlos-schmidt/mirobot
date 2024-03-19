@@ -1,4 +1,7 @@
 import ast
+from typing import List
+
+from src.model.opcua_binding import OpcUABinding
 
 
 class Config:
@@ -25,21 +28,21 @@ class Config:
             config_dict["conveyor_belt_input_location"]
         )
         self.store_locations = ast.literal_eval(config_dict["store_locations"])
-        self.obstacle_locations = ast.literal_eval(config_dict["obstacle_locations"])
 
         # OPC UA
-        self.opcua_server_urls = ast.literal_eval(config_dict["opcua_server_urls"])
+        self.opcua_configs: List[OpcUABinding] = list()
+        for config_set in ast.literal_eval(config_dict["opcua_configs"]):
+            self.opcua_configs.append(
+                OpcUABinding(
+                    config_set[0],
+                    config_set[1],
+                    config_set[2],
+                    config_set[3],
+                    config_set[4],
+                    config_set[5]
+                )
+            )
 
-        # For each node, a value should be given where the mirobot shall trigger
-        self.opcua_nodes = ast.literal_eval(config_dict["opcua_nodes"])
-        self.opcua_values = ast.literal_eval(config_dict["opcua_values"])
-        self.opcua_routines = ast.literal_eval(config_dict["opcua_routines"])
-        assert len(self.opcua_nodes) == len(self.opcua_values) and len(
-            self.opcua_values
-        ) == len(self.opcua_routines)
-
-        self.opcua_polling_rate = config_dict["opcua_polling_rate"]
-        self.opcua_request_timeout = config_dict["opcua_request_timeout"]
         # ROBO CONF
         self.mirobot_portname = config_dict["mirobot_portname"]
         self.mirobot_debug = bool(config_dict["mirobot_debug"])
