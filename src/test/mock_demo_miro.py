@@ -45,7 +45,7 @@ class MockDemonstratorMirobot:
         self.sanity -= 1
         print(f"EXITING {inspect.stack()[0][3]}")
 
-    def get_status(self):
+    def get_stored_items(self):
         return self.stored_items
     
     def execute_routine(self, routine_name: str):

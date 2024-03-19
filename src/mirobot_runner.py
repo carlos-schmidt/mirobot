@@ -24,7 +24,7 @@ class MirobotEventListener(OpcUAEventListener):
         # Start http server in different thread
         self.http_listener.start()
         
-        self.robot = DemonstratorMirobot(config)
+        self.robot = MockDemonstratorMirobot(config)
 
     def register_http_endpoints(self, http_listener: HTTPEventListener):
         """Register HTTP endpoints to listen on

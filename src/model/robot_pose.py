@@ -45,6 +45,13 @@ class RobotPose:
         else:
             raise TypeError("Both values must be of type point")
 
+    def __add__(self, other):
+        if isinstance(other, RobotPose):
+            return RobotPose(self.asnumpy() + other.asnumpy())
+        else:
+            raise TypeError("Both values must be of type point")
+
+
     def distance(self, other):
         """Calculate distance between self and other of type RobotPose.
 

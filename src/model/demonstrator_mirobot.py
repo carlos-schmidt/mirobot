@@ -8,7 +8,13 @@ from .robot_pose import RobotPose
 
 _logger = logging.getLogger(__name__)
 
-allowed_routines = ["put_from_conveyor_belt_output", "store_item", "put_from_store", "empty_store", "get_stored_items"]
+allowed_routines = [
+    "put_from_conveyor_belt_output",
+    "store_item",
+    "put_from_store",
+    "empty_store",
+    "get_stored_items",
+]
 
 
 class RoutineNotFoundException(BaseException):
@@ -25,7 +31,7 @@ class DemonstratorMirobot(Mirobot):
         self.mutex = Lock()
 
         self.conv_belt_out = RobotPose(np.asarray(config.conveyor_belt_output_location))
-        self.conv_belt_intermediate = [
+        self.conv_belt_intermediates = [
             RobotPose(np.asarray(pos))
             for pos in config.conveyor_belt_intermediate_locations
         ]
@@ -43,13 +49,12 @@ class DemonstratorMirobot(Mirobot):
             return
         _logger.info(f"ITEM-OUTPUT->ITEM-INPUT")
         self.move_along_trajectory(
-            self.conv_belt_out,
-            self.conv_belt_intermediate,0.1
+            destination=self.conv_belt_out, trajectory=self.conv_belt_intermediates
         )
         self.pick_up()
         self.move_along_trajectory(
-            self.conv_belt_in,
-            self.conv_belt_intermediate,
+            destination=self.conv_belt_in,
+            trajectory=self.conv_belt_intermediates,
         )
         self.drop()
         self.go_to_zero()
@@ -61,38 +66,46 @@ class DemonstratorMirobot(Mirobot):
         _logger.info(f"ITEM-OUTPUT->STORE[{self.stored_items}]")
 
         self.move_along_trajectory(
-            self.conv_belt_out,
-            self.conv_belt_intermediate
+            destination=self.conv_belt_out, trajectory=self.conv_belt_intermediates
         )
-        store_intermediate_1 = self.conv_belt_out - RobotPose(np.asarray([0,0,-70,0,0,0])) # Z coord + 70
-        store_intermediate = self.store_locations[self.stored_items]- RobotPose(np.asarray([0,0,-35,0,0,0])) # Z coord + 35
+        store_intermediate_1 = self.conv_belt_out + RobotPose(
+            np.asarray([0, 0, 70, 0, 0, 0])
+        )  # Z coord + 70
+        store_intermediate = self.store_locations[self.stored_items] + RobotPose(
+            np.asarray([0, 0, 35, 0, 0, 0])
+        )  # Z coord + 35
 
         self.pick_up()
-        self.move_along_trajectory(self.store_locations[self.stored_items], [store_intermediate_1, store_intermediate])
+        self.move_along_trajectory(
+            destination=self.store_locations[self.stored_items],
+            trajectory=[store_intermediate_1, store_intermediate],
+        )
         self.blow()
-        self.move_along_trajectory(self.conv_belt_intermediate[0], [store_intermediate])
+        self.move_along_trajectory(
+            destination=self.conv_belt_intermediates[0], trajectory=[store_intermediate]
+        )
         self.drop()
         self.go_to_zero()
         self.stored_items += 1
-        
+
     def put_from_store(self):
         if self.stored_items < 1:
             _logger.warn("No items in store or wrong configuration values")
             return
         _logger.info(f"STORE[{self.stored_items - 1}]->ITEM-INPUT")
 
-        store_intermediate = self.store_locations[self.stored_items - 1]
-        store_intermediate = store_intermediate - RobotPose(np.asarray([0,0,-50,0,0,0])) # Z coord + 50
+        store_intermediate = self.store_locations[self.stored_items] + RobotPose(
+            np.asarray([0, 0, 50, 0, 0, 0])
+        )  # Z coord + 50
 
         self.move_along_trajectory(
-            store_intermediate,self.conv_belt_intermediate
-        )
-        self.move_along_trajectory(
-            self.store_locations[self.stored_items - 1],
-            [store_intermediate]
+            destination=self.store_locations[self.stored_items - 1],
+            trajectory=[self.conv_belt_intermediates, store_intermediate],
         )
         self.pick_up()
-        self.move_along_trajectory(self.conv_belt_in, [store_intermediate]+ self.conv_belt_intermediate)
+        self.move_along_trajectory(
+            self.conv_belt_in, [store_intermediate] + self.conv_belt_intermediates
+        )
         self.drop()
         self.go_to_zero()
 
@@ -106,7 +119,7 @@ class DemonstratorMirobot(Mirobot):
 
         while self.stored_items > 0:
             self.put_from_store()
-            
+
     def get_stored_items(self):
         return self.stored_items
 
@@ -128,5 +141,5 @@ class DemonstratorMirobot(Mirobot):
         # Mutex to ensure no concurrent moves being made
         with self.mutex:
             getattr(self, routine_name)()
-            
+
         return True
